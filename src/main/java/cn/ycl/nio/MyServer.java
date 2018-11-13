@@ -65,7 +65,9 @@ public class MyServer {
             System.out.println("连接成功。" + "ip地址：" + client.socket().getInetAddress().getHostAddress() + "端口号：" + client.socket().getPort());
             //发送握手消息
             writeBuffer.clear();
-            writeBuffer = ByteBuffer.wrap("success".getBytes("utf-8"));
+            //TODO 罪魁祸首在这儿。。。wrap 方法会返回当前字节数的长度的byte缓冲区
+           // writeBuffer = ByteBuffer.wrap("success".getBytes("utf-8"));
+            writeBuffer.put("success".getBytes("utf-8"));
             writeBuffer.flip();
             client.write(writeBuffer);
             client.register(selector,SelectionKey.OP_READ);//注册读事件
@@ -80,8 +82,7 @@ public class MyServer {
             if("now".equals(code)){
                 //向客户端返回当前服务器时间
                 writeBuffer.clear();
-               // writeBuffer.put(new SimpleDateFormat("yyyyMMddHHmmss").format(new Date()).getBytes("utf-8"));
-                writeBuffer.put("123你好".getBytes());
+                writeBuffer.put(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()).getBytes("utf-8"));
                 writeBuffer.flip();
                 client.write(writeBuffer);
             }else if("version".equals(code)){
@@ -92,9 +93,26 @@ public class MyServer {
             }else if("bye".equals(code)){
                 System.out.println("断开连接，ip" + client.socket().getInetAddress().toString() + ":" + client.socket().getPort());
                 client.close();
+            }else if(code.startsWith("down")){
+                String[] s = code.split("-");
+                if(s != null && s.length == 2){
+                    try {
+                        new Thread(new FileDown(s[1],client)).start();
+                    } catch (Exception e) {
+                        writeBuffer.clear();
+                        writeBuffer.put(e.toString().getBytes("UTF-8"));
+                        writeBuffer.flip();
+                        client.write(writeBuffer);
+                    }
+                }else {
+                    writeBuffer.clear();
+                    writeBuffer.put("请检查下载文件的指令".getBytes("UTF-8"));
+                    writeBuffer.flip();
+                    client.write(writeBuffer);
+                }
             }else {
                 writeBuffer.clear();
-                writeBuffer.put("Imsorry".getBytes("UTF-8"));
+                writeBuffer.put("I'm sorry".getBytes("UTF-8"));
                 writeBuffer.flip();
                 client.write(writeBuffer);
             }

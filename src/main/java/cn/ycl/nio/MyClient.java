@@ -84,13 +84,16 @@ public class MyClient {
             //注册写事件
             socketChannel.register(selector,SelectionKey.OP_WRITE);
         }else if(key.isWritable()){
-            System.out.println("请您输入发送到服务器的指令");
+            System.out.println("请您输入发送到服务器的指令:");
             Scanner scanner = new Scanner(System.in);
             String code = scanner.next();
             writeBuffer.clear();
             writeBuffer.put(code.getBytes("utf-8"));
             writeBuffer.flip();
             socketChannel.write(writeBuffer);
+            if("bye".equals(code)){
+                System.exit(0);
+            }
             //注册读事件
             socketChannel.register(selector,SelectionKey.OP_READ);
         }
